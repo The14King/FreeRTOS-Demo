@@ -1,0 +1,5 @@
+*.xcworkspace/xcuserdata/*.xcuserdatad
+build
+.vscode
+.cache
+tools
