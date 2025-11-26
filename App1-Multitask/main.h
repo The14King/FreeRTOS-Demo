@@ -9,7 +9,6 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-
 // FreeRTOS
 #include <FreeRTOS.h>
 #include <task.h>
@@ -22,19 +21,13 @@
 // Pico SDK
 #include "pico/stdlib.h"
 
-
-/**
- * CONSTANTS
- */
+/* CONSTANTS */
 #define     GREEN_LED_PIN       4
 #define     YELLOW_LED_PIN      5
 #define     RED_LED_PIN         6
 #define     BUTTON_PIN          7
 
-
-/**
- * PROTOTYPES
- */
+/* PROTOTYPES */
 void led_task(void* unused_arg);
 void button_task(void* unused_arg);
 
