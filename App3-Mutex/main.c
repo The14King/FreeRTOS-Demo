@@ -9,8 +9,7 @@
 #include "main.h"
 
 /* GLOBALS */
-#define MULTITASK_APP true
-volatile uint32_t delay_value_ms = 1000;
+volatile uint32_t globalDelay = 1000;
 
 /* FUNCTIONS */
 
@@ -18,7 +17,7 @@ volatile uint32_t delay_value_ms = 1000;
  * @brief LED cycling task:
  *        Green → Yellow → Red, with a variable delay value.
  */
-void led_task(void* unused_arg) {
+void led_task(void* delayMutex) {
 
     gpio_init(GREEN_LED_PIN);
     gpio_set_dir(GREEN_LED_PIN, GPIO_OUT);
@@ -29,22 +28,28 @@ void led_task(void* unused_arg) {
     gpio_init(RED_LED_PIN);
     gpio_set_dir(RED_LED_PIN, GPIO_OUT);
 
+    volatile uint32_t localValueDelay = 1000;
     while (true) {
 
+        // Wait for the Mutex to be available indefinetly. If it is not, it means that the value is getting changed right now 
+        if (xSemaphoreTake(delayMutex, portMAX_DELAY) == pdPASS) {
+            localValueDelay = globalDelay;
+            xSemaphoreGive(delayMutex);
+        }
         // RED off, GREEN on
         gpio_put(RED_LED_PIN, 0);
         gpio_put(GREEN_LED_PIN, 1);
-        vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
+        vTaskDelay(localValueDelay / portTICK_PERIOD_MS);
 
         // GREEN off, YELLOW on
         gpio_put(GREEN_LED_PIN, 0);
         gpio_put(YELLOW_LED_PIN, 1);
-        vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
+        vTaskDelay(localValueDelay / portTICK_PERIOD_MS);
 
         // YELLOW off, RED on
         gpio_put(YELLOW_LED_PIN, 0);
         gpio_put(RED_LED_PIN, 1);
-        vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
+        vTaskDelay(localValueDelay / portTICK_PERIOD_MS);
     }
 }
 
@@ -53,78 +58,48 @@ void led_task(void* unused_arg) {
  *        HIGH = fast blink (100 ms)
  *        LOW  = slow blink (1000 ms)
  */
-void button_task(void* unused_arg) {
+void button_task(void* delayMutex) {
 
     gpio_init(BUTTON_PIN);
     gpio_set_dir(BUTTON_PIN, GPIO_IN);
 
+    volatile int delay = 1000;
+    volatile int prevDelay = 1000;
+
     while (true) {
 
         if (gpio_get(BUTTON_PIN)) {
-            delay_value_ms = 100;
+            delay = 100;
         } 
         else {
-            delay_value_ms = 1000;
+            delay = 1000;
         }
 
+        if (delay != prevDelay)
+        {
+            if (xSemaphoreTake(delayMutex, portMAX_DELAY) == pdPASS) {
+                globalDelay = delay;
+                xSemaphoreGive(delayMutex);
+            }
+            prevDelay = delay;
+        }
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
-
 /* RUNTIME START */
 int main() {
-
+    
     stdio_init_all();
 
-#if MULTITASK_APP
-
+    // Initialize the mutex for the shared delay time variable
+    SemaphoreHandle_t delayMutex = xSemaphoreCreateMutex();
     // Create tasks
-    xTaskCreate(button_task, "BUTTON_TASK", 128, NULL, 1, NULL);
-    xTaskCreate(led_task, "LED_TASK", 128, NULL, 1, NULL);
+    xTaskCreate(&button_task, "BUTTON_TASK", 128, delayMutex, 1, NULL);
+    xTaskCreate(&led_task, "LED_TASK", 128, delayMutex, 1, NULL);
     // Start FreeRTOS
     vTaskStartScheduler();
     // Should never reach here
     while (true) {
     }
-
-#else
-    gpio_init(GREEN_LED_PIN);
-    gpio_set_dir(GREEN_LED_PIN, GPIO_OUT);
-
-    gpio_init(YELLOW_LED_PIN);
-    gpio_set_dir(YELLOW_LED_PIN, GPIO_OUT);
-
-    gpio_init(RED_LED_PIN);
-    gpio_set_dir(RED_LED_PIN, GPIO_OUT);
-
-    gpio_init(BUTTON_PIN);
-    gpio_set_dir(BUTTON_PIN, GPIO_IN);
-
-    while (true) {
-
-        if (gpio_get(BUTTON_PIN)) {
-            delay_value_ms = 100;
-        } 
-        else {
-            delay_value_ms = 1000;
-        }
-
-        // RED off, GREEN on
-        gpio_put(RED_LED_PIN, 0);
-        gpio_put(GREEN_LED_PIN, 1);
-        vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
-
-        // GREEN off, YELLOW on
-        gpio_put(GREEN_LED_PIN, 0);
-        gpio_put(YELLOW_LED_PIN, 1);
-        vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
-
-        // YELLOW off, RED on
-        gpio_put(YELLOW_LED_PIN, 0);
-        gpio_put(RED_LED_PIN, 1);
-        vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
-    }
-
-#endif
 
 }

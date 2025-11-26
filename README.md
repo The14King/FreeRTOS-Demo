@@ -84,5 +84,70 @@ This version solves these problems by sending timing updates **only through a qu
 - **FreeRTOS-safe communication** → Queue ensures atomic transfer between tasks.
 
 
+## Mutex-Based Multitask App
+
+This module demonstrates another approach to coordinating two FreeRTOS tasks that both need access to a shared delay value.  
+Unlike the queue-based version—which sends timing updates explicitly—this version keeps the shared delay in a **global variable** and protects access to it using a **FreeRTOS mutex**.
+
+This provides controlled, synchronized read/write access without changing the program’s structure or data flow.
+
+---
+
+### Purpose of This Version
+
+The earlier version improved concurrency by avoiding shared-state access entirely.  
+  
+This version intentionally brings back a shared global `globalDelay`, but ensures safety by guarding all access with a mutex:
+
+- Writing to the variable happens only inside a mutex-protected critical section  
+- Reading the variable also requires acquiring the same mutex  
+- No race conditions  
+- No inconsistent reads  
+
+This makes the program closer to “classic” RTOS task-sharing patterns.
+
+---
+
+### How It Works
+
+#### **LED Task**
+- Initializes all LED pins.
+- Attempts to take the mutex before reading `globalDelay`.
+- Copies the shared value into its own local variable (`localValueDelay`).
+- Releases the mutex immediately after the read.
+- Uses the captured delay to perform the standard LED cycle.
+
+**Result:**  
+The LED task never uses a half-updated or inconsistent delay value.
+
+---
+
+#### **Button Task**
+- Reads the physical button every 100 ms.
+- Computes the new delay (`100 ms` fast or `1000 ms` slow).
+- If the value has changed:
+  - Takes the mutex  
+  - Updates `globalDelay`  
+  - Releases the mutex  
+- Remembers the previous value to avoid unnecessary lock attempts.
+
+**Result:**  
+Button timing updates are synchronized and atomic.
+
+---
+
+### Why Use a Mutex?
+
+A mutex is appropriate when:
+
+- You want tasks to share the same variable directly  
+- You want to maintain a single source of truth  
+- You need to prevent simultaneous access  
+- You want updates to be visible immediately to other tasks  
+
+This method is lightweight and easy to integrate into existing designs.
+
+---
+
 
 TODO: Do not forget to give credit to Tony Smitty for template

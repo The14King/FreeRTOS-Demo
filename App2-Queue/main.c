@@ -14,7 +14,7 @@
  * @brief LED cycling task:
  *        Green → Yellow → Red, with a variable delay value.
  */
-void led_task(QueueHandle_t queue_handle) {
+void led_task(void* queue_handle) {
 
     gpio_init(GREEN_LED_PIN);
     gpio_set_dir(GREEN_LED_PIN, GPIO_OUT);
@@ -53,7 +53,7 @@ void led_task(QueueHandle_t queue_handle) {
  *        HIGH = fast blink (100 ms)
  *        LOW  = slow blink (1000 ms)
  */
-void button_task(QueueHandle_t queue_handle) {
+void button_task(void* queue_handle) {
 
     gpio_init(BUTTON_PIN);
     gpio_set_dir(BUTTON_PIN, GPIO_IN);

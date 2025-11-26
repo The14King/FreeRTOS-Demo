@@ -12,6 +12,7 @@
 // FreeRTOS
 #include <FreeRTOS.h>
 #include <task.h>
+#include <semphr.h>
 
 // C
 #include <stdbool.h>
@@ -28,7 +29,7 @@
 #define     BUTTON_PIN          7
 
 /* PROTOTYPES */
-void led_task(void* unused_arg);
-void button_task(void* unused_arg);
+void led_task(void* delayMutex);
+void button_task(void* delayMutex);
 
 #endif  // MAIN_H

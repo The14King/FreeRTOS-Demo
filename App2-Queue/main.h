@@ -29,7 +29,7 @@
 #define     BUTTON_PIN          7
 
 /* PROTOTYPES */
-void led_task(QueueHandle_t queue_handle);
-void button_task(QueueHandle_t queue_handle);
+void led_task(void* queue_handle);
+void button_task(void* queue_handle);
 
 #endif  // MAIN_H
