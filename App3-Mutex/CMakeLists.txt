@@ -7,11 +7,7 @@ add_compile_definitions(BUILD_NUM=${BUILD_NUMBER})
 
 # Include app source code file(s)
 add_executable(${APP_3_NAME}
-    ${APP_3_SRC_DIRECTORY}/main.cpp
-    ${COMMON_CODE_DIRECTORY}/ht16k33.cpp
-    ${COMMON_CODE_DIRECTORY}/i2c_utils.cpp
-    ${COMMON_CODE_DIRECTORY}/mcp9808.cpp
-    ${COMMON_CODE_DIRECTORY}/utils.cpp
+    ${APP_3_SRC_DIRECTORY}/main.c
 )
 
 # Link to built libraries
