@@ -2,7 +2,7 @@
 
 This module demonstrates LED sequencing and button-controlled timing on the RP2040.  
 It can operate in two different modes depending on the `MULTITASK_APP` compile-time flag.
-Check the TinkerCAD image in /images and put together the hardware yourself.
+Check the wokwi (alternative to TinkerCAD, that has Raspberry Pi Pico W) image in /images and put together the hardware yourself.
 Then change the flag for yourself, build and see the difference. 
 
 ---
