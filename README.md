@@ -149,5 +149,92 @@ This method is lightweight and easy to integrate into existing designs.
 
 ---
 
+## Timers-based Traffic Light Sequence
+
+The final part of this demo showcases the use of **FreeRTOS software timers** to manage a complete traffic-light sequence in a clean, non-blocking way.
+
+Instead of relying on delays or state machines inside tasks, the timing logic is delegated entirely to FreeRTOS timers.
+
+---
+
+## Watcher Task and Timer Creation
+
+The `watcher_task` is responsible for monitoring the pedestrian button and triggering the traffic sequence when the button is pressed.
+
+Inside this task, **four one-shot software timers** are created:
+
+- **Timer 1 (3 seconds)**  
+  Prepares cars to stop by switching the car light from green to yellow.
+
+- **Timer 2 (5 seconds)**  
+  Stops cars and allows pedestrians to cross (red for cars, green for pedestrians).
+
+- **Timer 3 (12 seconds)**  
+  Signals pedestrians that the crossing phase is ending by switching to yellow.
+
+- **Timer 4 (14 seconds)**  
+  Restores the original traffic state (green for cars, red for pedestrians).
+
+All timers are created with `pdFALSE`, meaning they execute **only once per activation**.  
+Each timer is assigned a **unique ID (1–4)**, which is later used inside the callback function to determine the correct action.
+
+---
+
+## Button Trigger and Timer Start
+
+The watcher task continuously checks the button state:
+
+- When the button is pressed (pedestrians request to cross),
+- All four timers are started simultaneously using `xTimerStart()`.
+
+From this point onward, the task does nothing else—the entire sequence is handled asynchronously by the timers.
+
+This allows the system to remain responsive while the timing logic runs independently.
+
+---
+
+## Timer Callback Function
+
+All timers share a single callback function: `callback_function`.
+
+When a timer expires:
+1. FreeRTOS calls the callback automatically.
+2. The timer ID is retrieved using `pvTimerGetTimerID()`.
+3. A `switch` statement executes the corresponding traffic-light action.
+
+### Callback Steps
+
+- **Step 1 (Timer ID 1)**  
+  Cars switch from green to yellow.
+
+- **Step 2 (Timer ID 2)**  
+  Cars turn red and pedestrians turn green.
+
+- **Step 3 (Timer ID 3)**  
+  Pedestrians switch from green to yellow.
+
+- **Step 4 (Timer ID 4)**  
+  Pedestrians return to red and cars go back to green.
+
+Because each timer expires at a different time, the traffic-light sequence unfolds automatically without blocking any task.
+
+---
+
+## Why Software Timers Are Used
+
+This design highlights the advantages of FreeRTOS software timers:
+
+- No blocking delays (`vTaskDelay`)  
+- No busy-wait loops  
+- Precise and deterministic timing  
+- Clear separation between event handling (button press) and timed behavior  
+- Easy to extend with additional steps or logic  
+
+Once the scheduler is started in `main()`, the system runs autonomously: a button press triggers the timers, and the timers drive the entire traffic-light sequence step by step.
+
+---
+
+This completes the demo by demonstrating how **FreeRTOS software timers can be used to manage complex, time-dependent behavior in a clean, efficient, and scalable way**.
+
 
 TODO: Do not forget to give credit to Tony Smitty for template
