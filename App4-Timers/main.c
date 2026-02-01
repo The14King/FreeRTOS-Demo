@@ -8,123 +8,101 @@
  */
 #include "main.h"
 
-/* GLOBALS */
-#define MULTITASK_APP true
-volatile uint32_t delay_value_ms = 1000;
+void watcher_task(void* unused_arguments){  
+    
+    // Create the timers
+    TimerHandle_t t1, t2, t3, t4;
+ 
+    t1 = xTimerCreate("Step 1", pdMS_TO_TICKS(3000), pdFALSE, (void *)1, callback_function);    // Step 1: make the light yellow for cars
+    t2 = xTimerCreate("Step 2", pdMS_TO_TICKS(5000), pdFALSE, (void *)2, callback_function);    // Step 2: make red for cars and green for pedestrians 
+    t3 = xTimerCreate("Step 3", pdMS_TO_TICKS(12000), pdFALSE, (void *)3, callback_function);   // Step 3: make yellow for pedestrians
+    t4 = xTimerCreate("Step 4", pdMS_TO_TICKS(14000), pdFALSE, (void *)4, callback_function);   // Step 4: restore the original state: green cars, red pedestrians
 
-/* FUNCTIONS */
-
-/**
- * @brief LED cycling task:
- *        Green → Yellow → Red, with a variable delay value.
- */
-void led_task(void* unused_arg) {
-
-    gpio_init(GREEN_LED_PIN);
-    gpio_set_dir(GREEN_LED_PIN, GPIO_OUT);
-
-    gpio_init(YELLOW_LED_PIN);
-    gpio_set_dir(YELLOW_LED_PIN, GPIO_OUT);
-
-    gpio_init(RED_LED_PIN);
-    gpio_set_dir(RED_LED_PIN, GPIO_OUT);
-
-    while (true) {
-
-        // RED off, GREEN on
-        gpio_put(RED_LED_PIN, 0);
-        gpio_put(GREEN_LED_PIN, 1);
-        vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
-
-        // GREEN off, YELLOW on
-        gpio_put(GREEN_LED_PIN, 0);
-        gpio_put(YELLOW_LED_PIN, 1);
-        vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
-
-        // YELLOW off, RED on
-        gpio_put(YELLOW_LED_PIN, 0);
-        gpio_put(RED_LED_PIN, 1);
-        vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
-    }
-}
-
-/**
- * @brief Button monitoring task:
- *        HIGH = fast blink (100 ms)
- *        LOW  = slow blink (1000 ms)
- */
-void button_task(void* unused_arg) {
-
-    gpio_init(BUTTON_PIN);
-    gpio_set_dir(BUTTON_PIN, GPIO_IN);
-
-    while (true) {
-
-        if (gpio_get(BUTTON_PIN)) {
-            delay_value_ms = 100;
-        } 
-        else {
-            delay_value_ms = 1000;
+    while (true)
+    {
+        // Wait for the buttont to be pressed = pedestrians waiting to cross the road
+        if (gpio_get(BUTTON_PIN))
+        {
+            // Trigger the timers and just watch the action
+            xTimerStart(t1, 0); 
+            xTimerStart(t2, 0); 
+            xTimerStart(t3, 0); 
+            xTimerStart(t4, 0); 
         }
-
-        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
+
 }
 
+void callback_function( TimerHandle_t xTimer){
+
+    uint16_t id_timer = (uint16_t) pvTimerGetTimerID( xTimer);
+
+    switch (id_timer){
+        case 1:
+        {
+            gpio_put(YELLOW_CAR, 1);
+            gpio_put(GREEN_CAR, 0);
+            break;
+        }
+        case 2:
+        {
+            gpio_put(RED_CAR, 1);
+            gpio_put(YELLOW_CAR, 0);
+            gpio_put(RED_PEDESTRIAN, 0);
+            gpio_put(GREEN_PEDESTRIAN, 1);
+            break;
+        }
+        case 3:
+        {
+            gpio_put(YELLOW_PEDESTRIAN, 1);
+            gpio_put(GREEN_PEDESTRIAN, 0);
+            break;
+        }
+        case 4:
+        {
+            gpio_put(RED_PEDESTRIAN, 1);
+            gpio_put(YELLOW_PEDESTRIAN, 0);
+            gpio_put(RED_CAR, 0);
+            gpio_put(GREEN_CAR, 1);
+            break;
+        }
+    }
+}
 /* RUNTIME START */
 int main() {
 
+    // Start the microcontroller
     stdio_init_all();
 
-#if MULTITASK_APP
-
-    // Create tasks
-    xTaskCreate(button_task, "BUTTON_TASK", 128, NULL, 1, NULL);
-    xTaskCreate(led_task, "LED_TASK", 128, NULL, 1, NULL);
-    // Start FreeRTOS
-    vTaskStartScheduler();
-    // Should never reach here
-    while (true) {
-    }
-
-#else
-    gpio_init(GREEN_LED_PIN);
-    gpio_set_dir(GREEN_LED_PIN, GPIO_OUT);
-
-    gpio_init(YELLOW_LED_PIN);
-    gpio_set_dir(YELLOW_LED_PIN, GPIO_OUT);
-
-    gpio_init(RED_LED_PIN);
-    gpio_set_dir(RED_LED_PIN, GPIO_OUT);
-
+    // Initialize the button
     gpio_init(BUTTON_PIN);
     gpio_set_dir(BUTTON_PIN, GPIO_IN);
+    
+    // Car lights initialization
+    gpio_init(RED_CAR);
+    gpio_init(YELLOW_CAR);
+    gpio_init(GREEN_CAR);
+    gpio_set_dir(RED_CAR, GPIO_OUT);
+    gpio_set_dir(YELLOW_CAR, GPIO_OUT);
+    gpio_set_dir(GREEN_CAR, GPIO_OUT);
+    gpio_put(GREEN_CAR, 1);
 
+    // Pedestrian lights initialization
+    gpio_init(RED_PEDESTRIAN);
+    gpio_init(YELLOW_PEDESTRIAN);
+    gpio_init(GREEN_PEDESTRIAN);
+    gpio_set_dir(RED_PEDESTRIAN, GPIO_OUT);
+    gpio_set_dir(YELLOW_PEDESTRIAN, GPIO_OUT);
+    gpio_set_dir(GREEN_PEDESTRIAN, GPIO_OUT);
+    gpio_put(RED_PEDESTRIAN, 1);
+
+    // Create the task that will take care of the traffic :)
+    xTaskCreate(watcher_task, "WATCHER", 256, NULL, 1, NULL);
+
+    // Start FreeRTOS
+    vTaskStartScheduler();
+        
     while (true) {
-
-        if (gpio_get(BUTTON_PIN)) {
-            delay_value_ms = 100;
-        } 
-        else {
-            delay_value_ms = 1000;
-        }
-
-        // RED off, GREEN on
-        gpio_put(RED_LED_PIN, 0);
-        gpio_put(GREEN_LED_PIN, 1);
-        vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
-
-        // GREEN off, YELLOW on
-        gpio_put(GREEN_LED_PIN, 0);
-        gpio_put(YELLOW_LED_PIN, 1);
-        vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
-
-        // YELLOW off, RED on
-        gpio_put(YELLOW_LED_PIN, 0);
-        gpio_put(RED_LED_PIN, 1);
-        vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
+        // Should not get here
     }
-
-#endif
-
 }

@@ -98,8 +98,10 @@ int main() {
     xTaskCreate(&led_task, "LED_TASK", 128, delayMutex, 1, NULL);
     // Start FreeRTOS
     vTaskStartScheduler();
-    // Should never reach here
+
     while (true) {
+        // Do nothing
     }
+
 
 }
