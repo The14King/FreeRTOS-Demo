@@ -31,17 +31,14 @@ void led_task(void* unused_arg) {
 
     while (true) {
 
-        // RED off, GREEN on
         gpio_put(RED_LED_PIN, 0);
         gpio_put(GREEN_LED_PIN, 1);
         vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
 
-        // GREEN off, YELLOW on
         gpio_put(GREEN_LED_PIN, 0);
         gpio_put(YELLOW_LED_PIN, 1);
         vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
 
-        // YELLOW off, RED on
         gpio_put(YELLOW_LED_PIN, 0);
         gpio_put(RED_LED_PIN, 1);
         vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
@@ -85,7 +82,7 @@ int main() {
     vTaskStartScheduler();
 
     while (true) {
-        // Do nothing
+        // Should not reach here
     }
 
 
@@ -111,17 +108,14 @@ int main() {
             delay_value_ms = 1000;
         }
 
-        // RED off, GREEN on
         gpio_put(RED_LED_PIN, 0);
         gpio_put(GREEN_LED_PIN, 1);
         vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
 
-        // GREEN off, YELLOW on
         gpio_put(GREEN_LED_PIN, 0);
         gpio_put(YELLOW_LED_PIN, 1);
         vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
 
-        // YELLOW off, RED on
         gpio_put(YELLOW_LED_PIN, 0);
         gpio_put(RED_LED_PIN, 1);
         vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
