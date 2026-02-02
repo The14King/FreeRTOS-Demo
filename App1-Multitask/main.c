@@ -20,15 +20,6 @@ volatile uint32_t delay_value_ms = 1000;
  */
 void led_task(void* unused_arg) {
 
-    gpio_init(GREEN_LED_PIN);
-    gpio_set_dir(GREEN_LED_PIN, GPIO_OUT);
-
-    gpio_init(YELLOW_LED_PIN);
-    gpio_set_dir(YELLOW_LED_PIN, GPIO_OUT);
-
-    gpio_init(RED_LED_PIN);
-    gpio_set_dir(RED_LED_PIN, GPIO_OUT);
-
     while (true) {
 
         gpio_put(RED_LED_PIN, 0);
@@ -52,18 +43,13 @@ void led_task(void* unused_arg) {
  */
 void button_task(void* unused_arg) {
 
-    gpio_init(BUTTON_PIN);
-    gpio_set_dir(BUTTON_PIN, GPIO_IN);
-
     while (true) {
-
         if (gpio_get(BUTTON_PIN)) {
             delay_value_ms = 100;
         } 
         else {
             delay_value_ms = 1000;
         }
-
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
@@ -72,6 +58,18 @@ void button_task(void* unused_arg) {
 int main() {
 
     stdio_init_all();
+
+    gpio_init(GREEN_LED_PIN);
+    gpio_set_dir(GREEN_LED_PIN, GPIO_OUT);
+
+    gpio_init(YELLOW_LED_PIN);
+    gpio_set_dir(YELLOW_LED_PIN, GPIO_OUT);
+
+    gpio_init(RED_LED_PIN);
+    gpio_set_dir(RED_LED_PIN, GPIO_OUT);
+
+    gpio_init(BUTTON_PIN);
+    gpio_set_dir(BUTTON_PIN, GPIO_IN);
 
 #if MULTITASK_APP
 
@@ -85,20 +83,7 @@ int main() {
         // Should not reach here
     }
 
-
 #else
-    gpio_init(GREEN_LED_PIN);
-    gpio_set_dir(GREEN_LED_PIN, GPIO_OUT);
-
-    gpio_init(YELLOW_LED_PIN);
-    gpio_set_dir(YELLOW_LED_PIN, GPIO_OUT);
-
-    gpio_init(RED_LED_PIN);
-    gpio_set_dir(RED_LED_PIN, GPIO_OUT);
-
-    gpio_init(BUTTON_PIN);
-    gpio_set_dir(BUTTON_PIN, GPIO_IN);
-
     while (true) {
 
         if (gpio_get(BUTTON_PIN)) {
@@ -120,7 +105,6 @@ int main() {
         gpio_put(RED_LED_PIN, 1);
         vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
     }
-
 #endif
 
 }

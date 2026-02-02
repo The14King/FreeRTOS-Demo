@@ -15,7 +15,7 @@ Follow these steps to build and run the project:
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/smittytone/RP2040-FreeRTOS
+   git clone https://github.com/The14King/FreeRTOS-Demo
    ```
 
 2. **Enter the repository**

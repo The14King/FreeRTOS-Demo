@@ -25,24 +25,24 @@ void led_task(void* queue_handle) {
     gpio_init(RED_LED_PIN);
     gpio_set_dir(RED_LED_PIN, GPIO_OUT);
 
-    volatile int delay_value_ms = 1000;
+    volatile int led_delay_ms = 1000;
 
     while (true) {
 
         // Receive a message from queue if any
-        xQueueReceive(queue_handle, &delay_value_ms, 1/portTICK_PERIOD_MS);
+        xQueueReceive(queue_handle, &led_delay_ms, 1/portTICK_PERIOD_MS);
 
         gpio_put(RED_LED_PIN, 0);
         gpio_put(GREEN_LED_PIN, 1);
-        vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
+        vTaskDelay(led_delay_ms / portTICK_PERIOD_MS);
 
         gpio_put(GREEN_LED_PIN, 0);
         gpio_put(YELLOW_LED_PIN, 1);
-        vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
+        vTaskDelay(led_delay_ms / portTICK_PERIOD_MS);
 
         gpio_put(YELLOW_LED_PIN, 0);
         gpio_put(RED_LED_PIN, 1);
-        vTaskDelay(delay_value_ms / portTICK_PERIOD_MS);
+        vTaskDelay(led_delay_ms / portTICK_PERIOD_MS);
     }
 }
 
@@ -56,22 +56,22 @@ void button_task(void* queue_handle) {
     gpio_init(BUTTON_PIN);
     gpio_set_dir(BUTTON_PIN, GPIO_IN);
 
-    volatile int delay_value_ms = 1000;
-    volatile int prev_delay_value_ms = 1000;
+    volatile int button_delay_ms = 1000;
+    volatile int previous_button_delay_ms = 1000;
 
     while (true) {
 
         if (gpio_get(BUTTON_PIN)) {
-            delay_value_ms = 100;
+            button_delay_ms = 100;
         } 
         else {
-            delay_value_ms = 1000;
+            button_delay_ms = 1000;
         }
 
-        if (delay_value_ms != prev_delay_value_ms)
+        if (button_delay_ms != previous_button_delay_ms)
         {
-            xQueueSend(queue_handle, &delay_value_ms, 1/portTICK_PERIOD_MS);
-            prev_delay_value_ms = delay_value_ms;
+            xQueueSend(queue_handle, &button_delay_ms, 1/portTICK_PERIOD_MS);
+            previous_button_delay_ms = button_delay_ms;
         }
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
